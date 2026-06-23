@@ -15,6 +15,17 @@ require_once __DIR__ . '/controllers/DashboardController.php';
 require_once __DIR__ . '/middleware/AuthMiddleware.php';
 
 $p = $_GET['p'] ?? '';
+$validRoles = ['umkm', 'supplier'];
+
+if (isset($_SESSION['user_id']) && !in_array($_SESSION['role'] ?? '', $validRoles, true)) {
+    session_unset();
+    session_destroy();
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+    }
+    session_start();
+}
 
 // ============================================
 // PUBLIC ROUTES
@@ -23,7 +34,7 @@ $p = $_GET['p'] ?? '';
 // Landing page / root
 if (empty($p)) {
     // If logged in, redirect to portal
-    if (isset($_SESSION['user_id'])) {
+    if (isset($_SESSION['user_id']) && in_array($_SESSION['role'] ?? '', $validRoles, true)) {
         header('Location: index.php?p=' . $_SESSION['role']);
         exit;
     }
@@ -34,7 +45,7 @@ if (empty($p)) {
 
 // Login page
 if ($p === 'login') {
-    if (isset($_SESSION['user_id'])) {
+    if (isset($_SESSION['user_id']) && in_array($_SESSION['role'] ?? '', $validRoles, true)) {
         header('Location: index.php?p=' . $_SESSION['role']);
         exit;
     }
@@ -204,3 +215,6 @@ if ($p === 'umkm') {
 
 // Fallback
 header('Location: index.php?p=login');
+
+
+
